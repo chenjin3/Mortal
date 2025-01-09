@@ -6,7 +6,7 @@ ubuntu 20.04+
 参考文档 https://mortal.ekyu.moe/user/build.html
 
 ```sh
-git clone https://github.com/Equim-chan/Mortal.git
+git clone https://github.com/chenjin3/Mortal.git
 cd Mortal
 conda env create -f environment.yml
 conda activate mortal

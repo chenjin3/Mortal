@@ -3,7 +3,8 @@ use std::cmp::Ordering;
 use std::error::Error;
 use std::fmt;
 use std::str::FromStr;
-use std::sync::LazyLock;
+//use std::sync::LazyLock;
+use once_cell::sync::Lazy;
 
 use ahash::AHashMap;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -26,7 +27,7 @@ const DISCARD_PRIORITIES: [u8; 38] = [
     0, // unknown
 ];
 
-static MJAI_PAI_STRINGS_MAP: LazyLock<AHashMap<&'static str, Tile>> = LazyLock::new(|| {
+static MJAI_PAI_STRINGS_MAP: Lazy<AHashMap<&'static str, Tile>> = Lazy::new(|| {
     MJAI_PAI_STRINGS
         .iter()
         .enumerate()

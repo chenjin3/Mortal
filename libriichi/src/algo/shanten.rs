@@ -4,20 +4,21 @@
 
 use crate::tuz;
 use std::io::prelude::*;
-use std::sync::LazyLock;
+//use std::sync::LazyLock;
+use once_cell::sync::Lazy;
 
 use flate2::read::GzDecoder;
 
 const JIHAI_TABLE_SIZE: usize = 78_032;
 const SUHAI_TABLE_SIZE: usize = 1_940_777;
 
-static JIHAI_TABLE: LazyLock<Vec<[u8; 10]>> = LazyLock::new(|| {
+static JIHAI_TABLE: Lazy<Vec<[u8; 10]>> = Lazy::new(|| {
     read_table(
         include_bytes!("data/shanten_jihai.bin.gz"),
         JIHAI_TABLE_SIZE,
     )
 });
-static SUHAI_TABLE: LazyLock<Vec<[u8; 10]>> = LazyLock::new(|| {
+static SUHAI_TABLE: Lazy<Vec<[u8; 10]>> = Lazy::new(|| {
     read_table(
         include_bytes!("data/shanten_suhai.bin.gz"),
         SUHAI_TABLE_SIZE,

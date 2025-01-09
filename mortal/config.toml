@@ -1,0 +1,9 @@
+[control]
+state_file = '/root/Mortal/mortal.pth'
+version = 4
+
+[resnet]
+conv_channels = 192
+num_blocks = 40
+enable_bn = true
+bn_momentum = 0.99

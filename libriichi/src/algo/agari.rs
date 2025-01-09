@@ -12,7 +12,8 @@ use crate::tile::Tile;
 use crate::{matches_tu8, must_tile, tu8};
 use std::cmp::Ordering;
 use std::iter;
-use std::sync::LazyLock;
+//use std::sync::LazyLock;
+use once_cell::sync::Lazy;
 
 use boomphf::hashmap::BoomHashMap;
 use byteorder::{LittleEndian, ReadBytesExt};
@@ -21,7 +22,7 @@ use tinyvec::ArrayVec;
 
 const AGARI_TABLE_SIZE: usize = 9_362;
 
-static AGARI_TABLE: LazyLock<BoomHashMap<u32, ArrayVec<[Div; 4]>>> = LazyLock::new(|| {
+static AGARI_TABLE: Lazy<BoomHashMap<u32, ArrayVec<[Div; 4]>>> = Lazy::new(|| {
     let mut raw = GzDecoder::new(include_bytes!("data/agari.bin.gz").as_slice());
 
     let (keys, values): (Vec<_>, Vec<_>) = (0..AGARI_TABLE_SIZE)

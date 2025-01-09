@@ -1,10 +1,9 @@
-import prelude
-
+import time
 import os
 import sys
 import json
 import torch
-from datetime import datetime, timezone
+from datetime import datetime
 from model import Brain, DQN, GRP
 from engine import MortalEngine
 from common import filtered_trimmed_lines
@@ -25,18 +24,20 @@ def main():
         print(USAGE, file=sys.stderr)
         sys.exit(1)
     review_mode = os.environ.get('MORTAL_REVIEW_MODE', '0') == '1'
+    print(f'review_mode:{review_mode}')
 
-    device = torch.device('cpu')
-    state = torch.load(config['control']['state_file'], weights_only=True, map_location=torch.device('cpu'))
+    device = torch.device('cuda:0') #cpu
+    state = torch.load(config['control']['state_file'], weights_only=True, map_location=torch.device('cuda:0')) #cpu
     cfg = state['config']
     version = cfg['control'].get('version', 1)
     num_blocks = cfg['resnet']['num_blocks']
     conv_channels = cfg['resnet']['conv_channels']
+    #print(f'state: {state}')
     if 'tag' in state:
         tag = state['tag']
     else:
-        time = datetime.fromtimestamp(state['timestamp'], tz=timezone.utc).strftime('%y%m%d%H')
-        tag = f'mortal{version}-b{num_blocks}c{conv_channels}-t{time}'
+        timestr= datetime.now().strftime('%Y-%m-%d %H:%M:%S')  #datetime.fromtimestamp(state['timestamp'], tz=timezone.utc).strftime('%y%m%d%H')
+        tag = f'mortal{version}-b{num_blocks}c{conv_channels}-t{timestr}'
 
     mortal = Brain(version=version, num_blocks=num_blocks, conv_channels=conv_channels).eval()
     dqn = DQN(version=version).eval()
@@ -58,18 +59,34 @@ def main():
 
     if review_mode:
         logs = []
+
+    # 非复盘模式下的时间统计
+    if not review_mode:
+        start_time = time.time()
+        reaction_times = []
+
+    # 主推理循环
     for line in filtered_trimmed_lines(sys.stdin):
         if review_mode:
             logs.append(line)
 
+        if not review_mode:
+            iter_start = time.time()
+
         if reaction := bot.react(line):
-            print(reaction, flush=True)
+            #print(reaction, flush=True)
+
+            if not review_mode:
+                reaction_time = time.time() - iter_start
+                reaction_times.append(reaction_time)
+                #print(f"Decision time: {reaction_time:.3f}s", file=sys.stderr)
+
         elif review_mode:
             print('{"type":"none","meta":{"mask_bits":0}}', flush=True)
 
     if review_mode:
         grp = GRP(**config['grp']['network'])
-        grp_state = torch.load(config['grp']['state_file'], weights_only=True, map_location=torch.device('cpu'))
+        grp_state = torch.load(config['grp']['state_file'], weights_only=True, map_location=torch.device('cuda:0'))
         grp.load_state_dict(grp_state['model'])
 
         ins = Grp.load_log('\n'.join(logs))
@@ -87,6 +104,12 @@ def main():
             'phi_matrix': matrix.tolist(),
         }
         print(json.dumps(extra_data), flush=True)
+    else: # 非复盘模式下的时间统计
+        total_time = time.time() - start_time
+        avg_reaction_time = sum(reaction_times) / len(reaction_times) if reaction_times else 0
+        print(f"\nTotal time: {total_time:.3f}s", file=sys.stderr)
+        print(f"Average decision time: {avg_reaction_time:.3f}s", file=sys.stderr)
+        print(f"Total decisions: {len(reaction_times)}", file=sys.stderr)
 
 if __name__ == '__main__':
     try:

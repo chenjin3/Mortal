@@ -38,7 +38,7 @@ bn_momentum = 0.99
  1. 安装依赖
 ```sh
 pip install fastapi pydantic 
-apt install unicorn
+apt install uvicorn
 ```
 2. 启动fastapi inference server
 ```
